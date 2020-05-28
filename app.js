@@ -1,43 +1,18 @@
-const http = require("http");
-const fs = require("fs");
+const express = require("express");
+const bodyParser = require("body-parser");
+const adminRoutes = require("./routes/admin");
+const shopRoutes = require("./routes/shop");
+const path = require("path");
 
-const server = http.createServer((req, res) => {
-  const url = req.url;
-  const method = req.method;
-  if (url === "/") {
-    res.setHeader("Content-Type", "text/html");
-    res.write("<html>");
-    res.write("<head><title>Hello</title></head>");
-    res.write(
-      "<body><form method='POST' action='/message'><input type='text' name='message'/><button type='submit'>Send</button></form></body>"
-    );
-    res.write("</html>");
-    return res.end();
-  }
+const app = express();
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.static(path.join(__dirname, "public")))
 
-  if (url === "/message" && method === "POST") {
-    const body = [];
-    req.on("data", (chuck) => {
-      body.push(chuck);
-    });
+app.use("/admin", adminRoutes);
+app.use(shopRoutes);
 
-    req.on("end", () => {
-      const parsedBody = Buffer.concat(body).toString();
-      const message = parsedBody.split("=")[1];
-      //   fs.writeFileSync("message.text", message);
-      fs.writeFile("message.text", message, (err) => {
-        res.statusCode = "302";
-        res.setHeader("Location", "/");
-        return res.end();
-      });
-    });
-  }
-  res.setHeader("Content-Type", "text/html");
-  res.write("<html>");
-  res.write("<head><title>Hello</title></head>");
-  res.write("<body>Hello Node..</body>");
-  res.write("</html>");
-  res.end();
+app.use((req, res, next) => {
+  res.status(404).sendFile(path.join(__dirname, "views", "404.html"));
 });
 
-server.listen(4000);
+app.listen(3000);
